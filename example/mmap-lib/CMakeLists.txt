@@ -56,12 +56,14 @@ check_type_size(time_t SIZEOF_TIME_T)
 # Source files
 set(SOURCES
   HelloWorld.cpp
+  MmapUtils.cc
   HelloWorldIOS.mm
 )
 
 # Headers
 set(HEADERS
   HelloWorld.hpp
+  MmapUtils.hpp
   HelloWorldIOS.h
 )
 
