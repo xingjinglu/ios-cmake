@@ -23,6 +23,12 @@
 #define API
 #endif
 
+#define MNN_MMAP_IOS
+
+
+std::string createFile(std::string fileName, size_t size);
+void* openAndTruncFile(std::string filePath, size_t size);
+
 template<typename T>
 class MmapStorage{
   public:
@@ -42,9 +48,6 @@ class MmapStorage{
           mFd_ = -2;
         }
         if(mFilePath_ != ""){
-          //if(remove(mFilePath_.c_str()) != 0)
-          //  MNN_PRINT("%s:%s:%d: Error, remove file failed\n", __FILE__, __FUNCTION__, __LINE__);
-
           mFilePath_ = "";
         }
 
@@ -55,14 +58,13 @@ class MmapStorage{
     }
 
     // size: number of element.
-    int alloc(int size, int fd)
+    int alloc(size_t size, int fd)
     {
       ftruncate(fd, size * sizeof(T));
       mData_ =static_cast<T*>(mmap(NULL, size * sizeof(T), PROT_WRITE|PROT_READ, 
             MAP_SHARED, fd, 0));
 
       if(mData_ == MAP_FAILED){
-        //MNN_PRINT("%s:%s:%d: Error, failed to mmap\n", __FILE__, __FUNCTION__, __LINE__);
         printf("%s:%s:%d: Error, failed to mmap %s\n", __FILE__, __FUNCTION__, __LINE__, strerror(errno));
         return -1;
       }
@@ -73,52 +75,34 @@ class MmapStorage{
     }
 
     // Allocate mmap meomry with implicit file.
-    int alloc(int size, std::string file_path)
+    int alloc(size_t  size, std::string file_name="example.txt")
     {
-      std::string filePath = "";
-      //filePath = getTemporaryDirectory();
-      //filePath += "/example3.txt";
-      filePath = file_path;
+#ifdef MNN_MMAP_IOS
+      //NSFileHandle *ptr = nil;
+      std::string filePath = createFile(file_name, size * sizeof(T));
+      if(filePath == "")
+        printf("%s:%d:%s: Error, failed to createFile, %s\n", __FILE__, __LINE__, __FUNCTION__, strerror(errno));
+      mData_ = static_cast<T*>(openAndTruncFile(filePath, size * sizeof(T)));
+      if(mData_ == nullptr)
+        return -1;
+#endif
+
 #if 0
-      std::ifstream file(filePath);
-      if(file.good()){
-        if(std::remove(filePath.c_str()) != 0){
-          //MNN_PRINT("Error No.: %d, failed to remove file %s,", errno, filePath.c_str());
-          printf("Error No.: %d, failed to remove file %s,", errno, filePath.c_str());
-        }
-        else{
-          //MNN_PRINT("Succedd in remove");
-          printf("Succedd in remove");
-        }
-      }
-      else{
-        //MNN_PRINT("File not good");
-        printf("File not good");
+      mData_ =static_cast<T*>(mmap(NULL, size * sizeof(T), PROT_WRITE|PROT_READ, 
+            MAP_SHARED, fd, 0));
+
+      if(mData_ == MAP_FAILED){
+        printf("%s:%d:%s: Error, failed to mmap, %s\n", __FILE__, __LINE__, __FUNCTION__, strerror(errno));
+        return -1;
       }
 #endif
 
-      int mFd_ = open(filePath.c_str(), O_RDWR | O_CREAT, S_IWOTH);
-      if(mFd_ == -1){
-        //MNN_PRINT("%s:%d:%s: Error No: %d, failed to open/create file: %s\n", __FILE__, __LINE__,  __FUNCTION__, errno, filePath.c_str());
-        printf("%s:%d:%s: Error No: %d, failed to open/create file: %s\n", __FILE__, __LINE__,  __FUNCTION__, errno, filePath.c_str());
-        mFd_ = -2;
-        return -1;
-      }
-
-      ftruncate(mFd_, size * sizeof(T));
-      mData_ =static_cast<T*>(mmap(NULL, size * sizeof(T), PROT_WRITE|PROT_READ, 
-            MAP_SHARED, mFd_, 0));
-
-      if(mData_ == MAP_FAILED){
-        //MNN_PRINT("%s:%d:%s: Error, failed to mmap\n", __FILE__, __LINE__, __FUNCTION__);
-        printf("%s:%d:%s: Error, failed to mmap\n", __FILE__, __LINE__, __FUNCTION__);
-        return -1;
-      }
-
-      std::cout<<"MmapStorage: size = " << size << std::endl;
-      close(mFd_);
+      std::cout<<"MmapStorage: size = " << size * sizeof(T) << std::endl;
+      //close(mFd_);
       mSize_ = size;
+#ifdef MNN_MMAP_IOS
       mFilePath_ = filePath;
+#endif
 
       return 0;
     }
@@ -126,39 +110,32 @@ class MmapStorage{
 
 
     // size: number of element.
-    MmapStorage(int size)
+    MmapStorage(size_t size, std::string file_name="test.txt")
     {
-      std::string filePath = "";
 #ifdef MNN_MMAP_IOS
-      filePath = getTemporaryDirectory();
+      std::string filePath = createFile(file_name, size * sizeof(T));
+      mData_ = static_cast<T*>(openAndTruncFile(filePath, size * sizeof(T)));
 #endif
-      filePath = "/example4.txt";
-      std::ofstream file(filePath);
-      if(file.is_open())
-        file.close();
-      else
-        //MNN_PRINT("%s:%s:%d: Error, failed to create file\n", __FILE__, __FUNCTION__, __LINE__);
-        printf("%s:%s:%d: Error, failed to create file\n", __FILE__, __FUNCTION__, __LINE__);
-      
-      int mFd_ = open(filePath.c_str(), O_RDWR);
-      ftruncate(mFd_, size * sizeof(T));
+#if 0 
       mData_ =static_cast<T*>(mmap(NULL, size * sizeof(T), PROT_WRITE|PROT_READ, 
             MAP_SHARED, mFd_, 0));
 
       if(mData_ == MAP_FAILED){
-        //MNN_PRINT("%s:%s:%d: Error, failed to mmap\n", __FILE__, __FUNCTION__, __LINE__);
         printf("%s:%s:%d: Error, failed to mmap\n", __FILE__, __FUNCTION__, __LINE__);
         return;
       }
+#endif
       std::cout<<"MmapStorage: size = " << size << std::endl;
-      close(mFd_);
+      //close(mFd_);
       mFd_ = 0;
-      mFilePath_ = filePath;
       mSize_ = size;
+#ifdef MNN_MMAP_IOS
+      mFilePath_ = filePath;
+#endif
     }
 
     // return number of element.
-    inline int size() const {
+    inline size_t size() const {
       return mSize_;
     }
 
@@ -167,7 +144,7 @@ class MmapStorage{
     }
 
     //  TBD
-    int set(T* data, int size)
+    int set(T* data, size_t size)
     {
       if(nullptr != mData_ && mData_ != data){
         int ret = munmap(mData_, mSize_);
@@ -184,7 +161,7 @@ class MmapStorage{
     }
 
     // 
-    int reset(int size)
+    int reset(size_t size)
     {
       if(size == mSize_)
         return 0;
@@ -192,7 +169,6 @@ class MmapStorage{
       // free mmap memory.
       if(mData_ != nullptr){
         if(0 != munmap(mData_, mSize_ * sizeof(T))){
-          //MNN_PRINT("%s:%s:%d; munmap failed\n", __FILE__, __FUNCTION__, __LINE__);
           printf("%s:%s:%d; munmap failed\n", __FILE__, __FUNCTION__, __LINE__);
           return -1;
         }
@@ -209,14 +185,11 @@ class MmapStorage{
     {
       if(mData_ != nullptr) {
         if(0 != munmap(mData_, mSize_ * sizeof(T))){
-          //MNN_PRINT("%s:%s:%d; munmap failed\n", __FILE__, __FUNCTION__, __LINE__);
           printf("%s:%s:%d; munmap failed\n", __FILE__, __FUNCTION__, __LINE__);
           return -1;
         }
         if(mFd_ != 0) close(mFd_);
         if(mFilePath_ != ""){
-          //if(remove(mFilePath_.c_str()) != 0)
-          //  MNN_PRINT("%s:%s:%d; delete %s failed\n", __FILE__, __FUNCTION__, __LINE__, mFilePath_);
           mFilePath_ = "";
           ;
         }
@@ -231,9 +204,9 @@ class MmapStorage{
   private:
     T *mData_ = nullptr;
     // number of element with type T.
-    int mSize_ = 0; 
-    int mFd_ = 0;
-    std::string mFilePath_ = "";
+    size_t mSize_ = 0; 
+    int mFd_ = 0; // not used
+    std::string mFilePath_ = ""; // not used
 
 };
 
@@ -247,12 +220,22 @@ class BufferStorageMmap{
       offset = 0;
     }
 
-    BufferStorageMmap(int size, int in_offset=0){
+    // size: byte number.
+    BufferStorageMmap(size_t size, size_t in_offset=0, std::string file_name="test.txt"){
+#ifdef MNN_MMAP_IOS
+      std::string filePath = createFile(file_name, size + in_offset);
+      storage = static_cast<uint8_t*>(openAndTruncFile(filePath, size + in_offset));
+#endif
+#if 0
       storage =(uint8_t*)(mmap(NULL, size + in_offset, PROT_WRITE|PROT_READ, 
             MAP_PRIVATE|MAP_ANONYMOUS, -1, 0));
 
       if(storage == MAP_FAILED){
         std::cerr<<"Failed to mmap" <<std::endl;
+        return;
+      }
+#endif
+      if(storage == nullptr){
         return;
       }
       std::cout<<"MmapStorage: size = " << size << std::endl;
@@ -288,18 +271,14 @@ class BufferStorageMmap{
     } 
 
 
-    int alloc(int size, size_t in_offset = 0)
+    int alloc(size_t size, size_t in_offset = 0, std::string file_name = "test.txt")
     {
-      std::string filePath = "example.txt";
-      std::ofstream file(filePath);
-      if(file.is_open())
-        file.close();
-      else{
-        //MNN_PRINT("%s:%s:%d: Error, failed to create file\n", __FILE__, __FUNCTION__, __LINE__);
-        printf("%s:%s:%d: Error, failed to create file\n", __FILE__, __FUNCTION__, __LINE__);
-        return -1;
-      }
 
+#ifdef MNN_MMAP_IOS
+      std::string filePath = createFile(file_name, size + in_offset);
+      storage = static_cast<uint8_t*>(openAndTruncFile(filePath, size + in_offset));
+#endif
+#if 0
       int fd = open(filePath.c_str(), O_RDWR);
       ftruncate(fd, size + in_offset);
       storage =static_cast<uint8_t*>(mmap(NULL, size + in_offset, PROT_WRITE|PROT_READ, 
@@ -310,8 +289,12 @@ class BufferStorageMmap{
         printf("%s:%s:%d: Error, failed to mmap\n", __FILE__, __FUNCTION__, __LINE__);
         return -1;
       }
+#endif
+      if(storage == nullptr){
+        return -1;
+      }
 
-      std::cout<<"MmapStorage: size = " << (size + in_offset) << std::endl;
+      std::cout<<"BufferStorage: size = " << (size + in_offset) << std::endl;
       close(fd);
       allocated_size = size + in_offset;
       file_path = filePath;

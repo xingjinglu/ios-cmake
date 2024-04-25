@@ -8,6 +8,12 @@ enable_language(OBJC)
 MESSAGE( STATUS "CMAKE_CXX_FLAGS: " ${CMAKE_CXX_FLAGS} )
 MESSAGE( STATUS "CMAKE_OBJC_FLAGS: " ${CMAKE_OBJC_FLAGS} )
 
+if(MNN_MMAP_IOS)
+  set(CMAKE_C_FLAGS "-DMNN_MMAP_IOS")
+  set(CMAKE_CXX_FLAGS "-DMNN_MMAP_IOS")
+  set(CMAKE_OBJC_FLAGS "-DMNN_MMAP_IOS")
+  set(CMAKE_OBJCXX_FLAGS "-DMNN_MMAP_IOS")
+endif()
 # Add some sanitary checks that the toolchain is actually working!
 include(CheckCXXSymbolExists)
 check_cxx_symbol_exists(kqueue sys/event.h HAVE_KQUEUE)
@@ -56,14 +62,14 @@ check_type_size(time_t SIZEOF_TIME_T)
 # Source files
 set(SOURCES
   HelloWorld.cpp
-  MmapUtils.cc
+  MmapUtilsIos.mm
   HelloWorldIOS.mm
 )
 
 # Headers
 set(HEADERS
   HelloWorld.hpp
-  MmapUtils.hpp
+  MmapUtilsIos.hpp
   HelloWorldIOS.h
 )
 
