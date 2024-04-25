@@ -19,6 +19,7 @@
 
 /* Begin PBXFileReference section */
 		5B1821D92BD8085A00575B5F /* libexample.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libexample.a; path = "../mmap-lib/build/Release-iphoneos/libexample.a"; sourceTree = "<group>"; };
+		5B1821DC2BDA09ED00575B5F /* test_clibs_ocDebug.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = test_clibs_ocDebug.entitlements; sourceTree = "<group>"; };
 		5B2A479F2BD0D828007C3631 /* test_clibs_oc.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = test_clibs_oc.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		5B2A47A22BD0D828007C3631 /* AppDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AppDelegate.h; sourceTree = "<group>"; };
 		5B2A47A32BD0D828007C3631 /* AppDelegate.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = AppDelegate.m; sourceTree = "<group>"; };
@@ -71,6 +72,7 @@
 		5B2A47A12BD0D828007C3631 /* test_clibs_oc */ = {
 			isa = PBXGroup;
 			children = (
+				5B1821DC2BDA09ED00575B5F /* test_clibs_ocDebug.entitlements */,
 				5B2A47A22BD0D828007C3631 /* AppDelegate.h */,
 				5B2A47A32BD0D828007C3631 /* AppDelegate.m */,
 				5B2A47A52BD0D828007C3631 /* SceneDelegate.h */,
@@ -335,9 +337,11 @@
 				ARCHS = "$(ARCHS_STANDARD)";
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = test_clibs_oc/test_clibs_ocDebug.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = 6XY5823SQA;
+				ENABLE_HARDENED_RUNTIME = NO;
 				GENERATE_INFOPLIST_FILE = YES;
 				HEADER_SEARCH_PATHS = "/Users/xingjinglu/project/ios-cmake/example/mmap-lib";
 				INFOPLIST_FILE = test_clibs_oc/Info.plist;
